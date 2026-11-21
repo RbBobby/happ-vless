@@ -1,0 +1,41 @@
+name: Deploy VLESS to VPS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy.yml'
+      - 'deploy/**'
+      - 'happ-vless.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: happ-vless-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Deploy over SSH
+        env:
+          VPN_SSH_HOST: ${{ vars.VPN_SSH_HOST }}
+          VPN_SSH_PORT: ${{ vars.VPN_SSH_PORT }}
+          VPN_SSH_USER: ${{ vars.VPN_SSH_USER }}
+          VPN_PUBLIC_HOST: ${{ vars.VPN_PUBLIC_HOST }}
+          VPN_PORT: ${{ vars.VPN_PORT }}
+          VPN_SNI: ${{ vars.VPN_SNI }}
+          VPN_NAME: ${{ vars.VPN_NAME }}
+          VPN_SSH_PRIVATE_KEY: ${{ secrets.VPN_SSH_PRIVATE_KEY }}
+          VPN_SSH_KNOWN_HOSTS: ${{ secrets.VPN_SSH_KNOWN_HOSTS }}
+        run: bash deploy/ssh-deploy.sh
